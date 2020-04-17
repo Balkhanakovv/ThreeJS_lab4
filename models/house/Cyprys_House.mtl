@@ -1,0 +1,137 @@
+#
+#
+#
+
+newmtl balcony_balcony_plaster_light_brown Mesh_plaster_light_brown
+illum 2
+Ka 0.000000 0.000000 0.000000
+Kd 0.640000 0.640000 0.640000
+Ks 0.500000 0.500000 0.500000
+Ns 96.078430
+
+newmtl barrels_barrels_metal_grey Mesh_metal_grey
+illum 2
+Ka 0.000000 0.000000 0.000000
+Kd 0.152141 0.152141 0.152141
+Ks 0.500000 0.500000 0.500000
+Ns 96.078430
+
+newmtl barrels_barrels_wood_brown Mesh_wood_brown
+illum 2
+Ka 0.000000 0.000000 0.000000
+Kd 0.640000 0.475519 0.213333
+Ks 0.500000 0.500000 0.500000
+Ns 96.078430
+
+newmtl boards_boards_wood_brown Mesh_wood_brown
+illum 2
+Ka 0.000000 0.000000 0.000000
+Kd 0.640000 0.475519 0.213333
+Ks 0.500000 0.500000 0.500000
+Ns 96.078430
+
+newmtl boards_support_boards_support_wood_brown Mesh_wood_brown
+illum 2
+Ka 0.000000 0.000000 0.000000
+Kd 0.640000 0.475519 0.213333
+Ks 0.500000 0.500000 0.500000
+Ns 96.078430
+
+newmtl chimneys_chimneys_metal_dark_brown Mesh_metal_dark_brown
+illum 2
+Ka 0.000000 0.000000 0.000000
+Kd 0.088550 0.088550 0.088550
+Ks 0.500000 0.500000 0.500000
+Ns 96.078430
+
+newmtl chimneys_chimneys_plaster_light_brown Mesh_plaster_light_brown
+illum 2
+Ka 0.000000 0.000000 0.000000
+Kd 0.640000 0.640000 0.640000
+Ks 0.500000 0.500000 0.500000
+Ns 96.078430
+
+newmtl cover_window_cover_window_plaster_sand Mesh_plaster_sand
+illum 2
+Ka 0.000000 0.000000 0.000000
+Kd 0.640000 0.640000 0.640000
+Ks 0.500000 0.500000 0.500000
+Ns 96.078430
+
+newmtl doors_doors_wood_brown Mesh_wood_brown
+illum 2
+Ka 0.000000 0.000000 0.000000
+Kd 0.640000 0.475519 0.213333
+Ks 0.500000 0.500000 0.500000
+Ns 96.078430
+
+newmtl foundation_foundation_foundation_brown_brick Mesh_foundation_brown_brick
+illum 2
+Ka 0.000000 0.000000 0.000000
+Kd 0.219064 0.194279 0.119927
+Ks 0.500000 0.500000 0.500000
+Ns 96.078430
+
+newmtl gutters_gutters_metal_grey Mesh_metal_grey
+illum 2
+Ka 0.000000 0.000000 0.000000
+Kd 0.152141 0.152141 0.152141
+Ks 0.500000 0.500000 0.500000
+Ns 96.078430
+
+newmtl parapets_parapets_foundation_brown_brick Mesh_foundation_brown_brick
+illum 2
+Ka 0.000000 0.000000 0.000000
+Kd 0.219064 0.194279 0.119927
+Ks 0.500000 0.500000 0.500000
+Ns 96.078430
+
+newmtl roof_roof_metal_dark_brown Mesh_metal_dark_brown
+illum 2
+Ka 0.000000 0.000000 0.000000
+Kd 0.088550 0.088550 0.088550
+Ks 0.500000 0.500000 0.500000
+Ns 96.078430
+
+newmtl roof_support_roof_support_wood_balls_brown Mesh_wood_balls_brown
+illum 2
+Ka 0.000000 0.000000 0.000000
+Kd 0.389518 0.330790 0.167855
+Ks 0.500000 0.500000 0.500000
+Ns 96.078430
+
+newmtl walls_walls_plaster_light_brown Mesh_plaster_light_brown
+illum 2
+Ka 0.000000 0.000000 0.000000
+Kd 0.640000 0.640000 0.640000
+Ks 0.500000 0.500000 0.500000
+Ns 96.078430
+
+newmtl window_roof_window_roof_glass_window Mesh_glass_window
+illum 2
+Ka 0.000000 0.000000 0.000000
+Kd 0.237845 0.524170 0.640000
+Ks 0.500000 0.500000 0.500000
+Ns 96.078430
+
+newmtl window_roof_window_roof_metal_dark_brown Mesh_metal_dark_brown
+illum 2
+Ka 0.000000 0.000000 0.000000
+Kd 0.088550 0.088550 0.088550
+Ks 0.500000 0.500000 0.500000
+Ns 96.078430
+
+newmtl windows_windows_glass_window Mesh_glass_window
+illum 2
+Ka 0.000000 0.000000 0.000000
+Kd 0.237845 0.524170 0.640000
+Ks 0.500000 0.500000 0.500000
+Ns 96.078430
+
+newmtl windows_windows_wood_brown Mesh_wood_brown
+illum 2
+Ka 0.000000 0.000000 0.000000
+Kd 0.640000 0.475519 0.213333
+Ks 0.500000 0.500000 0.500000
+Ns 96.078430
+
