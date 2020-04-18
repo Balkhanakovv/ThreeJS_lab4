@@ -160,7 +160,6 @@ function onDocumentMouseMove( event )
                         if (intersect(selected.userData, objectList[i].userData) === true)
                         {
                             objectList[i].userData.cube.material.visible = true;
-                            objectList[i].material.color = {r:1, g:0, b:0};
                         }
                     }
                 }
