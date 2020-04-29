@@ -1,6 +1,8 @@
 var container;
-var camera, scene, renderer;
+var camera, scene, renderer, cameraOrtho, sceneOrtho;
 var spotlight = new THREE.PointLight(0xffffff);
+var sprite;
+var loader = new THREE.TextureLoader();
 
 var N = 350;
 var targetList = [];
@@ -13,6 +15,13 @@ var brushdirection=0;
 var clock = new THREE.Clock();
 var mouse = { x: 0, y: 0 };
 
+var xwind = 0;
+var g = new THREE.Vector3(0, -9.8 , 0);
+var wind = new THREE.Vector3(0.0, 0.0, 0.0);
+var particles = [];
+var MAX_PARTICLES = 250;
+var partVis = false;
+
 var gui = new dat.GUI();
 gui.width = 200;
 
@@ -21,6 +30,9 @@ var models = new Map();
 var selected = null;
 
 var lmb = false; 
+var sprt = null;
+
+var sprtBtn = [];
 
 init();
 animate();
@@ -29,7 +41,14 @@ function init()
 {
     container = document.getElementById( 'container' );
     scene = new THREE.Scene();
-    
+    var width = window.innerWidth;
+    var height = window.innerHeight;
+
+    sceneOrtho = new THREE.Scene();
+
+    cameraOrtho = new THREE.OrthographicCamera( - width / 2, width / 2, height / 2, -height / 2, 1, 10 );
+    cameraOrtho.position.z = 10;
+
     camera = new THREE.PerspectiveCamera( 45, window.innerWidth / window.innerHeight, 1, 40000 );
     camera.position.set(N/2, N/2, N+N/2);
     camera.lookAt(new THREE.Vector3(N/2, 0, N/2));                            
@@ -42,34 +61,44 @@ function init()
 
     window.addEventListener( 'resize', onWindowResize, false );
     
+    renderer.autoClear = false;
+
     renderer.domElement.addEventListener( 'mousedown', onDocumentMouseDown, false );
     renderer.domElement.addEventListener( 'mouseup', onDocumentMouseUp, false );
     renderer.domElement.addEventListener( 'mousemove', onDocumentMouseMove, false );
     renderer.domElement.addEventListener( 'wheel', onDocumentMouseScroll, false );
     renderer.domElement.addEventListener("contextmenu",function (event){event.preventDefault();});
 
-    
-
-    
     spotlight.position.set(N, N*2, N/2);
-    scene.add( spotlight );                                    
+    scene.add( spotlight );    
     
     Ter();
     addBrush();
     
-
-
     GUI();
 
     loadModel('models/house/', 'Cyprys_House.obj', 'Cyprys_House.mtl', 2, 'house');
     loadModel('models/palm/', 'Palma 001.obj', 'Palma 001.mtl', 0.6, 'palm');
     loadModel('models/grade/', 'grade.obj', 'grade.mtl', 3, 'grade');
+
+    sprtBtn.push( addButtons('house') );
+    sprtBtn.push( addButtons('grade') );
+    sprtBtn.push( addButtons('palm') );
 }
 
 function onWindowResize() 
 {
+    var width = window.innerWidth;
+    var height = window.innerHeight;
+
     camera.aspect = window.innerWidth / window.innerHeight;
     camera.updateProjectionMatrix();
+
+    cameraOrtho.left = -width / 2;
+    cameraOrtho.right = width / 2;
+    cameraOrtho.top = height / 2;
+    cameraOrtho.bottom = -height / 2;
+    cameraOrtho.updateProjectionMatrix();
 
     renderer.setSize( window.innerWidth, window.innerHeight );
 }
@@ -92,6 +121,26 @@ function onDocumentMouseScroll( event )
 
 function onDocumentMouseMove( event )
 {
+    var mpos = {};
+
+    mpos.x = event.clientX - (window.innerWidth / 2);
+    mpos.y = (window.innerHeight / 2) - event.clientY;
+
+    if (sprtBtn[0] != null)
+        {
+            hitButton(mpos, sprtBtn[0]);
+        }
+
+    if (sprtBtn[1] != null)
+    {
+        hitButton(mpos, sprtBtn[1]);
+    }
+
+    if (sprtBtn[2] != null)
+    {
+        hitButton(mpos, sprtBtn[2]);
+    }
+
     mouse.x = ( event.clientX / window.innerWidth ) * 2 - 1;
     mouse.y = - ( event.clientY / window.innerHeight ) * 2 + 1;
     var vector = new THREE.Vector3( mouse.x, mouse.y, 1 );
@@ -218,6 +267,28 @@ function onDocumentMouseUp( event )
     else 
     {
         lmb = false;
+        var mpos = {};
+
+        mpos.x = event.clientX - (window.innerWidth / 2);
+        mpos.y = (window.innerHeight / 2) - event.clientY;
+
+        if (sprtBtn[0] != null)
+        {
+            hitButton(mpos, sprtBtn[0]);
+            clickButton(mpos, sprtBtn[0]);
+        }
+
+        if (sprtBtn[1] != null)
+        {
+            hitButton(mpos, sprtBtn[1]);
+            clickButton(mpos, sprtBtn[1]);
+        }
+
+        if (sprtBtn[2] != null)
+        {
+            hitButton(mpos, sprtBtn[2]);
+            clickButton(mpos, sprtBtn[2]);
+        }
     }
 }
 
@@ -366,13 +437,17 @@ function animate()
         objectList[i].position.y = mas.vertices[Math.round(objectList[i].position.x) + Math.round(objectList[i].position.z)*N].y + 0.5;
     }
 
+    emitter(delta);
     requestAnimationFrame( animate );
     render();
 }
 
 function render() 
 {
+    renderer.clear();
     renderer.render( scene, camera );
+    renderer.clearDepth();
+    renderer.render( sceneOrtho, cameraOrtho);
 }
 
 function sculpt(dir, delta)
@@ -404,26 +479,17 @@ function GUI()
 {
     var params =
     {
-        sx: 0, sy: 0, sz: 0,
+        rotate: 0,
+        wind: 0,
         brush: false,
+        rain: false,
         addHouse: function() { addMesh('house') },
         addPalm: function() { addMesh('palm') },
         addGrade: function() { addMesh('grade') }
-        //del: function() { delMesh() }
     };
-    //создание вкладки
-    var folder1 = gui.addFolder('Rotate');
-    //ассоциирование переменных отвечающих за масштабирование
-    //в окне интерфейса они будут представлены в виде слайдера
-    //минимальное значение - 1, максимальное – 100, шаг – 1
-    //listen означает, что изменение переменных будет отслеживаться
     
-    var meshSY = folder1.add( params, 'sy' ).min(1).max(1000).step(1).listen();
-    //при запуске программы папка будет открыта
-    folder1.open();
-    //описание действий совершаемых при изменении ассоциированных значений
     
-    //meshSX.onChange(function(value) {…});
+    var meshSY = gui.add( params, 'rotate' ).min(1).max(1000).step(1).listen();
     meshSY.onChange(function(value) {
         if (selected != null)
         {
@@ -431,25 +497,31 @@ function GUI()
             selected.rotation.set(0, value * 0.01, 0);
         }
     });
-    //meshSZ.onChange(function(value) {…});
-    
-    //добавление чек бокса с именем brush
-    var cubeVisible = gui.add( params, 'brush' ).name('brush').listen();    
-    cubeVisible.onChange(function(value)
+
+    var meshWIND = gui.add( params, 'wind' ).min(-100).max(100).step(1).listen();
+    meshWIND.onChange(function(value) {
+        xwind = value;
+        wind.set(xwind, 0, 0);
+    });
+
+
+    var brushVisible = gui.add( params, 'brush' ).name('brush').listen();    
+    brushVisible.onChange(function(value)
     {
         brVis = value;
         circle.visible = value;
         cylinder.visible = value;
     });
-    //добавление кнопок, при нажатии которых будут вызываться функции addMesh
-    //и delMesh соответственно. Функции описываются самостоятельно.
-        gui.add( params, 'addHouse' ).name( "add house" );
-        gui.add( params, 'addPalm' ).name( "add palm" );
-        gui.add( params, 'addGrade' ).name( "add grade" );
-    
-    //gui.add( params, 'del' ).name( "delete" );
-    
-    //при запуске программы интерфейс будет раскрыт
+
+    var particlesVisible = gui.add( params, 'rain' ).name('rain').listen();
+    particlesVisible.onChange(function(value)
+    {
+        partVis = value;
+    });
+
+    gui.add( params, 'addHouse' ).name( "add house" );
+    gui.add( params, 'addPalm' ).name( "add palm" );
+    gui.add( params, 'addGrade' ).name( "add grade" );
     gui.open();
 }
 
@@ -682,3 +754,198 @@ function intersect(ob1, ob2)
     // no separating axis exists, so the two OBB don't intersect
     return true;
 }
+
+function addSprite(name1, name2, Click)
+{
+    var type;
+
+    if (name1 == 'pics/house.jpg')
+        type = 'house';
+
+    if (name1 == 'pics/grade.png')
+        type = 'grade'
+
+    if (name1 == 'pics/palm.png')
+        type = 'palm'
+
+    //загрузка текстуры спрайта
+    var texture1 = loader.load(name1);
+    var material1 = new THREE.SpriteMaterial( { map: texture1 } );
+
+    var texture2 = loader.load(name2);
+    var material2 = new THREE.SpriteMaterial( { map: texture2 } );
+
+
+    //создание спрайта
+    sprite = new THREE.Sprite( material1);
+
+    //центр и размер спрайта
+    sprite.center.set( 0.0, 1.0 );
+    sprite.scale.set( 128, 100, 1 );
+
+    //позиция спрайта (центр экрана)
+    sprite.position.set( 0, 0, 1 );
+    sceneOrtho.add(sprite);    
+    updateHUDSprite(sprite);
+
+    var SSprite = {};
+    SSprite.sprite = sprite;
+    SSprite.mat1 = material1;
+    SSprite.mat2 = material2;
+    SSprite.click = Click;
+    SSprite.type = type;
+
+    if (type == "grade")
+        sprite.position.set(0, window.innerHeight / 2, 1);
+
+    if (type == "house")
+        sprite.position.set(-window.innerWidth / 2, window.innerHeight / 2, 1);
+
+    if (type == "palm")
+        sprite.position.set(-window.innerWidth / 4, window.innerHeight / 2, 1);
+
+    return SSprite;
+}
+
+function updateHUDSprite(sprite)
+{
+    var width = window.innerWidth / 2;
+    var height = window.innerHeight / 2;
+
+    sprite.position.set( -width, height, 1 );
+}
+
+function addButtons( name )
+{
+    if (name == 'house')
+        sprt = addSprite('pics/house.jpg', 'pics/house1.jpg', houseClick); 
+    
+    if (name == 'grade')
+        sprt = addSprite('pics/grade.png', 'pics/grade1.png', gradeClick); 
+
+    if (name == 'palm')
+        sprt = addSprite('pics/palm.png', 'pics/palm1.png', palmClick); 
+
+    return sprt;
+}
+
+function hitButton(mPos, sprite)
+{
+    var pw = sprite.sprite.position.x;
+    var ph = sprite.sprite.position.y;
+    var sw = pw + sprite.sprite.scale.x;
+    var sh = ph - sprite.sprite.scale.y;
+
+    if (mPos.x > pw && mPos.x < sw){
+        if (mPos.y < ph && mPos.y > sh)
+        {
+            sprite.sprite.material = sprite.mat2;
+        }
+        else
+            sprite.sprite.material = sprite.mat1;
+    }
+    else
+        sprite.sprite.material = sprite.mat1;
+}
+
+function clickButton(mPos, sprite)
+{
+    var pw = sprite.sprite.position.x;
+    var ph = sprite.sprite.position.y;
+    var sw = pw + sprite.sprite.scale.x;
+    var sh = ph - sprite.sprite.scale.y;
+
+    if (mPos.x > pw && mPos.x < sw){
+        if (mPos.y < ph && mPos.y > sh)
+        {
+            sprite.click();
+        }
+    }
+}
+
+function houseClick()
+{
+    addMesh('house');
+}
+
+function gradeClick()
+{
+    addMesh('grade');
+}
+
+function palmClick()
+{
+    addMesh('palm');
+}
+
+function addDrop(pos)
+{
+    var texture = loader.load('pics/drop.png');
+    var material = new THREE.SpriteMaterial( {map: texture} );
+
+    sprite = new THREE.Sprite( material );
+    sprite.center.set(0.5, 0.5);
+    sprite.scale.set(1, 3, 1);
+
+    sprite.position.copy( pos );
+
+    scene.add( sprite );
+
+    var SSprite = {};
+    SSprite.sprite = sprite;
+    SSprite.v = new THREE.Vector3(0, 0, 0);
+
+    particles.push( SSprite );
+
+    return SSprite;
+}
+
+function emitter(delta)
+{
+    if (particles.length < MAX_PARTICLES)
+    {
+        var x = Math.random()*N;
+        var z = Math.random()*N;
+
+        var pos = new THREE.Vector4(x, 150, z);
+        addDrop(pos);
+    }
+
+    for (var i = 0; i < particles.length; i++)
+    {
+        particles[i].v = particles[i].v.add(g); 
+        particles[i].sprite.position = particles[i].sprite.position.add(particles[i].v.multiplyScalar(delta * 10));
+    }
+
+    for (var i = 0; i < particles.length; i++)
+    {
+                
+        if (particles[i].sprite.position.y < -5)
+        {
+            particles[i].sprite.position.y = 250;
+            particles[i].sprite.position.x = Math.random()*N;
+        }
+    }            
+
+    for (var i = 0; i < particles.length; i++)
+    {
+        if (partVis == true)
+            particles[i].sprite.visible = true;
+        else
+            particles[i].sprite.visible = false;
+
+        var v = new THREE.Vector3(0, 0, 0);
+        var w = new THREE.Vector3(0, 0, 0);
+        
+        w.copy(wind);
+        w.multiplyScalar(delta);
+        
+        v.copy(particles[i].v);
+        v.add(w);
+        
+        particles[i].sprite.position.add(v);
+    }
+
+    
+}
+
