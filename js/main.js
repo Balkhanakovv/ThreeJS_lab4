@@ -209,6 +209,11 @@ function onDocumentMouseMove( event )
                         if (intersect(selected.userData, objectList[i].userData) === true)
                         {
                             objectList[i].userData.cube.material.visible = true;
+                            if (selected != null)
+                            {
+                                objectList[i].position.x -= 0.5;
+                                objectList[i].userData.cube.position.x -= 0.5;
+                            }
                         }
                     }
                 }
