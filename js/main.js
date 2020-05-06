@@ -174,8 +174,8 @@ function onDocumentMouseMove( event )
             
                     if(x>=0 && x<N && z>=0 && z<N)
                     {
-                        var y =  mas.vertices[z + x * N].y;
-                        circle.geometry.vertices[i].y = y + 0.01;
+                        var y =  mas.vertices[x + z * N].y;
+                        circle.geometry.vertices[i].y = y + 0.1;
                     }
                     else
                         circle.geometry.vertices[i].y = 0;
