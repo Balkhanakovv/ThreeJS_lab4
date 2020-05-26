@@ -33,6 +33,8 @@ var lmb = false;
 var sprt = null;
 
 var sprtBtn = [];
+var keyboard = new THREEx.KeyboardState();
+var lastPos = new THREE.Vector3();
 
 init();
 animate();
@@ -189,10 +191,10 @@ function onDocumentMouseMove( event )
     {
         if ( intersects.length > 0 && lmb == true)
         {
-            var lastPos = new THREE.Vector3();
+            
             if(selected != null)
             {
-                lastPos = selected.position;
+                //lastPos = selected.position;
                 selected.position.copy(intersects[ 0 ].point);
 
                 selected.userData.box.setFromObject(selected);
@@ -211,8 +213,8 @@ function onDocumentMouseMove( event )
                             objectList[i].userData.cube.material.visible = true;
                             if (selected != null)
                             {
-                                objectList[i].position.x -= 0.5;
-                                objectList[i].userData.cube.position.x -= 0.5;
+                                objectList[i].position.x -= 1;
+                                objectList[i].userData.cube.position.x -= 1;
                             }
                         }
                     }
@@ -234,7 +236,7 @@ function onDocumentMouseDown( event )
     }
     else
     {
-        lmb = true
+        lmb = true;
         mouse.x = ( event.clientX / window.innerWidth ) * 2 - 1;
         mouse.y = - ( event.clientY / window.innerHeight ) * 2 + 1;
         var vector = new THREE.Vector3( mouse.x, mouse.y, 1 );
@@ -244,21 +246,23 @@ function onDocumentMouseDown( event )
         
         if ( intersects.length > 0 )
         {   
-            if (selected != null){
-                            
+            if (selected != null){                            
                 selected.userData.cube.material.visible = false;
                 selected = intersects[0].object.parent;            
                 selected.userData.cube.material.visible = true;
+
             }
             else
             {
                 selected = intersects[0].object.parent;            
                 selected.userData.cube.material.visible = true;
+                                        
+                lastPos = selected.position;
             }
         }
         else
             if (selected != null)
-            {
+            {                
                 selected.userData.cube.material.visible = false;
                 selected = null;
             }
@@ -428,9 +432,10 @@ function Ter()
     scene.add(terrain);
 }
 
-
+b = 0.0;
 function animate() 
 {
+    //console.log(lastPos);
     var delta = clock.getDelta();
     if (brushdirection != 0)
     {
@@ -440,6 +445,28 @@ function animate()
     for (var i = 0; i < objectList.length; i++)
     {
         objectList[i].position.y = mas.vertices[Math.round(objectList[i].position.x) + Math.round(objectList[i].position.z)*N].y + 0.5;
+    }
+
+    if (keyboard.pressed("left")) 
+    {
+        b += 0.005;
+        console.log(b);
+        var x = N/2 + (N + N/2) * Math.cos(b);
+        var z = N/2 + (N + N/2) * Math.sin(b);
+
+        camera.position.set(x, N/2, z);
+        camera.lookAt(new THREE.Vector3(N/2, 0, N/2));
+    }
+
+    if (keyboard.pressed("right")) 
+    {
+        b -= 0.005;
+        console.log(b);
+        var x = N/2 + (N + N/2) * Math.cos(b);
+        var z = N/2 + (N + N/2) * Math.sin(b);
+
+        camera.position.set(x, N/2, z);        
+        camera.lookAt(new THREE.Vector3(N/2, 0, N/2));
     }
 
     emitter(delta);
@@ -490,7 +517,8 @@ function GUI()
         rain: false,
         addHouse: function() { addMesh('house') },
         addPalm: function() { addMesh('palm') },
-        addGrade: function() { addMesh('grade') }
+        addGrade: function() { addMesh('grade') },
+        del: function() { delMesh() }
     };
     
     
@@ -527,6 +555,7 @@ function GUI()
     gui.add( params, 'addHouse' ).name( "add house" );
     gui.add( params, 'addPalm' ).name( "add palm" );
     gui.add( params, 'addGrade' ).name( "add grade" );
+    gui.add( params, 'del' ).name( "delete" );
     gui.open();
 }
 
@@ -954,3 +983,18 @@ function emitter(delta)
     
 }
 
+function delMesh()
+{
+    if (selected != null)
+    {
+        for (var i = 0; i < objectList.length; i++) {
+            if (objectList[i] == selected)
+            {
+                objectList[i].userData.cube.material.visible = false;
+                scene.remove(objectList[i]);
+                objectList.splice(i, 1);
+                selected = null;
+            }
+        }
+    }
+}
