@@ -34,7 +34,6 @@ var sprt = null;
 
 var sprtBtn = [];
 var keyboard = new THREEx.KeyboardState();
-var lastPos = new THREE.Vector3();
 
 init();
 animate();
@@ -194,7 +193,8 @@ function onDocumentMouseMove( event )
             
             if(selected != null)
             {
-                //lastPos = selected.position;
+                var lastPos = new THREE.Vector3();
+                lastPos.copy(selected.position);
                 selected.position.copy(intersects[ 0 ].point);
 
                 selected.userData.box.setFromObject(selected);
@@ -205,7 +205,7 @@ function onDocumentMouseMove( event )
 
                 for (var i=0; i < objectList.length; i++)
                 {
-                    if (selected.userData.cube != objectList[i] ){
+                    if (selected != objectList[i] ){
                         objectList[i].userData.cube.material.visible = false;
 
                         if (intersect(selected.userData, objectList[i].userData) === true)
@@ -213,8 +213,11 @@ function onDocumentMouseMove( event )
                             objectList[i].userData.cube.material.visible = true;
                             if (selected != null)
                             {
-                                objectList[i].position.x -= 1;
-                                objectList[i].userData.cube.position.x -= 1;
+                                selected.position.copy(lastPos);
+                                selected.userData.box.setFromObject(selected);
+                                selected.userData.box.getCenter(pos); 
+                                selected.userData.obb.position.copy(pos);
+                                selected.userData.cube.position.copy(pos);
                             }
                         }
                     }
