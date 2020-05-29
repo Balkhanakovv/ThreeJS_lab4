@@ -257,7 +257,7 @@ function onDocumentMouseDown( event )
                 selected = intersects[0].object.parent;            
                 selected.userData.cube.material.visible = true;
                                         
-                lastPos = selected.position;
+                //lastPos = selected.position;
             }
         }
         else
@@ -526,8 +526,16 @@ function GUI()
     meshSY.onChange(function(value) {
         if (selected != null)
         {
-            selected.userData.cube.rotation.set(0, value * 0.01, 0);
-            selected.rotation.set(0, value * 0.01, 0);
+            //selected.userData.cube.rotation.set(0, value * 0.01, 0);
+            //selected.rotation.set(0, value * 0.01, 0);
+            selected.userData.cube.rotation.set(0, (Math.PI/180) * value, 0);
+            selected.rotation.set(0, (Math.PI/180) * value, 0);
+
+            selected.userData.box.setFromObject(selected);
+            var pos = new THREE.Vector3();
+            selected.userData.box.getCenter(pos);
+            selected.userData.obb.position.copy(pos);
+            selected.userData.cube.position.copy(pos);
         }
     });
 
