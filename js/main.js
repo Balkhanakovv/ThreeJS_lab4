@@ -87,6 +87,64 @@ function init()
     sprtBtn.push( addButtons('palm') );
 }
 
+b = 0.0;
+function animate() 
+{
+    var delta = clock.getDelta();
+    if (brushdirection != 0)
+    {
+        sculpt(brushdirection, delta);
+    }
+    
+    for (var i = 0; i < objectList.length; i++)
+    {
+        objectList[i].position.y = mas.vertices[Math.round(objectList[i].position.x) + Math.round(objectList[i].position.z)*N].y + 0.5;
+    }
+
+    if (keyboard.pressed("left")) 
+    {
+        b += 0.005;
+        console.log(b);
+        var x = N/2 + (2 * N/2) * Math.cos(b);
+        var z = N/2 + (2 * N/2) * Math.sin(b);
+
+        camera.position.set(x, N/2, z);
+        camera.lookAt(new THREE.Vector3(N/2, 0, N/2));
+    }
+
+    if (keyboard.pressed("right")) 
+    {
+        b -= 0.005;
+        console.log(b);
+        var x = N/2 + (2 * + N/2) * Math.cos(b);
+        var z = N/2 + (2 * N/2) * Math.sin(b);
+
+        camera.position.set(x, N/2, z);        
+        camera.lookAt(new THREE.Vector3(N/2, 0, N/2));
+    }
+
+    if (selected != null)
+    {
+        var pos = new THREE.Vector3();
+        var size = new THREE.Vector3();
+
+        selected.userData.box.getCenter(pos);
+        selected.userData.box.getSize(size);
+
+        selected.userData.cube.position.copy(pos);
+        selected.userData.cube.scale.set(size.x, size.y, size.z);
+
+        selected.userData.box.getCenter(selected.userData.obb.position);
+        selected.userData.box.getSize(selected.userData.obb.halfSize).multiplyScalar(0.5);
+        
+        selected.userData.obb.basis.extractRotation(selected.matrixWorld);
+    }
+
+    emitter(delta);
+    requestAnimationFrame( animate );
+    render();
+}
+
 function onWindowResize() 
 {
     var width = window.innerWidth;
@@ -259,8 +317,6 @@ function onDocumentMouseDown( event )
             {
                 selected = intersects[0].object.parent;            
                 selected.userData.cube.material.visible = true;
-                                        
-                //lastPos = selected.position;
             }
         }
         else
@@ -382,9 +438,7 @@ function loadModel(path, oname, mname, s, name)
             object.position.z = z;                
 
             object.scale.set(s, s, s);
-            models.set(name, object);
-            //models.push( object );
-            
+            models.set(name, object);            
         }, onProgress, onError ); 
     });
 }
@@ -435,48 +489,6 @@ function Ter()
     scene.add(terrain);
 }
 
-b = 0.0;
-function animate() 
-{
-    //console.log(lastPos);
-    var delta = clock.getDelta();
-    if (brushdirection != 0)
-    {
-        sculpt(brushdirection, delta);
-    }
-    
-    for (var i = 0; i < objectList.length; i++)
-    {
-        objectList[i].position.y = mas.vertices[Math.round(objectList[i].position.x) + Math.round(objectList[i].position.z)*N].y + 0.5;
-    }
-
-    if (keyboard.pressed("left")) 
-    {
-        b += 0.005;
-        console.log(b);
-        var x = N/2 + (N + N/2) * Math.cos(b);
-        var z = N/2 + (N + N/2) * Math.sin(b);
-
-        camera.position.set(x, N/2, z);
-        camera.lookAt(new THREE.Vector3(N/2, 0, N/2));
-    }
-
-    if (keyboard.pressed("right")) 
-    {
-        b -= 0.005;
-        console.log(b);
-        var x = N/2 + (N + N/2) * Math.cos(b);
-        var z = N/2 + (N + N/2) * Math.sin(b);
-
-        camera.position.set(x, N/2, z);        
-        camera.lookAt(new THREE.Vector3(N/2, 0, N/2));
-    }
-
-    emitter(delta);
-    requestAnimationFrame( animate );
-    render();
-}
-
 function render() 
 {
     renderer.clear();
@@ -504,8 +516,8 @@ function sculpt(dir, delta)
     }
 
     mas.computeFaceNormals();
-    mas.computeVertexNormals(); //пересчёт нормалей
-    mas.verticesNeedUpdate = true; //обновление вершин
+    mas.computeVertexNormals(); 
+    mas.verticesNeedUpdate = true; 
     mas.normalsNeedUpdate = true;
 
 }
@@ -515,6 +527,7 @@ function GUI()
     var params =
     {
         rotate: 0,
+        scale: 0,
         wind: 0,
         brush: false,
         rain: false,
@@ -529,8 +542,6 @@ function GUI()
     meshSY.onChange(function(value) {
         if (selected != null)
         {
-            //selected.userData.cube.rotation.set(0, value * 0.01, 0);
-            //selected.rotation.set(0, value * 0.01, 0);
             selected.userData.cube.rotation.set(0, (Math.PI/180) * value, 0);
             selected.rotation.set(0, (Math.PI/180) * value, 0);
 
@@ -539,6 +550,17 @@ function GUI()
             selected.userData.box.getCenter(pos);
             selected.userData.obb.position.copy(pos);
             selected.userData.cube.position.copy(pos);
+        }
+    });
+
+    var meshScale = gui.add( params, 'scale' ).min(0.5).max(3).step(0.01).listen();
+    meshScale.onChange(function(value) 
+    {
+        if (selected != null)
+        {
+            selected.scale.x = value;
+            selected.scale.y = value;
+            selected.scale.z = value;
         }
     });
 
@@ -577,6 +599,17 @@ function addMesh(name)
 
         var model = models.get(name).clone();
 
+        model.scale.x = 1;
+        model.scale.y = 1;
+        model.scale.z = 1;
+
+        if (name == 'grade')
+        {
+            model.scale.x = 2;
+            model.scale.y = 2;
+            model.scale.z = 2;
+        }
+
         var box = new THREE.Box3();
         box.setFromObject(model);
         model.userData.box = box; 
@@ -590,13 +623,9 @@ function addMesh(name)
 
         var pos = new THREE.Vector3();
         box.getCenter(pos);
-        //получение размеров объекта
         var size = new THREE.Vector3();
         box.getSize(size);
 
-        
-
-        //установка позиции и размера объекта в куб
         cube.position.copy(pos);
         cube.scale.set(size.x, size.y, size.z);
 
@@ -604,15 +633,11 @@ function addMesh(name)
         cube.userData.model = model;
 
         var obb = {};
-        //структура состоит из матрицы поворота, позиции и половины размера
         obb.basis = new THREE.Matrix4();
         obb.halfSize = new THREE.Vector3();
         obb.position = new THREE.Vector3();
-        //получение позиции центра объекта
         box.getCenter(obb.position);
-        //получение размеров объекта
         box.getSize(obb.halfSize).multiplyScalar(0.5);
-        //получение матрицы поворота объекта
         obb.basis.extractRotation(model.matrixWorld);
 
         model.userData.obb = obb;
@@ -813,22 +838,17 @@ function addSprite(name1, name2, Click)
     if (name1 == 'pics/palm.png')
         type = 'palm'
 
-    //загрузка текстуры спрайта
     var texture1 = loader.load(name1);
     var material1 = new THREE.SpriteMaterial( { map: texture1 } );
 
     var texture2 = loader.load(name2);
     var material2 = new THREE.SpriteMaterial( { map: texture2 } );
 
-
-    //создание спрайта
     sprite = new THREE.Sprite( material1);
 
-    //центр и размер спрайта
     sprite.center.set( 0.0, 1.0 );
     sprite.scale.set( 128, 100, 1 );
 
-    //позиция спрайта (центр экрана)
     sprite.position.set( 0, 0, 1 );
     sceneOrtho.add(sprite);    
     updateHUDSprite(sprite);
